@@ -1,8 +1,15 @@
 services:
-  zoomsdk: &zoomsdk
+  zoomsdk:
     build: ./
     platform: linux/amd64
     volumes:
-     - .:/tmp/meeting-sdk-linux-sample
-    ports:
-      - "3000:3000"
+      - .:/tmp/meeting-sdk-linux-sample
+      - ./out:/tmp/meeting-sdk-linux-sample/out
+    stop_grace_period: 20s  # Give container time to clean up
+    restart: "no"  # Don't restart automatically
+    environment:
+      - RECORDING_DIR=/tmp/meeting-sdk-linux-sample/out
+    # Allow the container to be properly shutdown with signals
+    init: true
+    # Make sure we stop the container properly
+    stop_signal: SIGTERM
