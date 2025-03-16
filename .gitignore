@@ -8,12 +8,12 @@ out
 config.toml
 
 # ignore the SDK files added to the project
-lib/zoomsdk/images
-lib/zoomsdk/h
-lib/zoomsdk/json
-lib/zoomsdk/qt_libs
-lib/zoomsdk/*.so
-lib/zoomsdk/*.md
+#lib/zoomsdk/images
+#lib/zoomsdk/h
+#lib/zoomsdk/json
+#lib/zoomsdk/qt_libs
+#lib/zoomsdk/*.so
+#lib/zoomsdk/*.md
 
 # PCM files
 *.pcm
