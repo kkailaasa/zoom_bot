@@ -65,6 +65,16 @@ class Zoom : public Singleton<Zoom> {
     void generateJWT(const string& key, const string& secret);
 
     /**
+     * Callback fired when the SDK authenticates the credentials
+    */
+    function<void()> m_onAuth = [&]() {
+        auto e = isMeetingStart() ? start() : join();
+        string action = isMeetingStart() ? "start" : "join";
+
+        if(hasError(e, action + " a meeting")) exit(e);
+    };
+
+    /**
      * Callback fires when the bot joins the meeting
     */
     function<void()> onJoin = [&]() {
@@ -100,7 +110,17 @@ class Zoom : public Singleton<Zoom> {
     };
 
 public:
-    Zoom() {};
+    Zoom() :
+        m_meetingService(nullptr),
+        m_settingService(nullptr),
+        m_authService(nullptr),
+        m_videoHelper(nullptr),
+        m_renderDelegate(nullptr),
+        m_audioHelper(nullptr),
+        m_audioSource(nullptr),
+        m_videoSource(nullptr)
+    {};
+
     SDKError init();
     SDKError auth();
     SDKError config(int ac, char** av);

@@ -66,7 +66,7 @@ SDKError Zoom::auth() {
         return err;
     }
 
-    err = m_authService->SetEvent(new AuthServiceEvent(onAuth));
+    err = m_authService->SetEvent(new AuthServiceEvent(m_onAuth));
     if (hasError(err)) return err;
 
     generateJWT(m_config.clientId(), m_config.clientSecret());
@@ -147,8 +147,9 @@ SDKError Zoom::join() {
         if (!audioSettings) return SDKERR_INTERNAL_ERROR;
 
         audioSettings->EnableAutoJoinAudio(true);
-        audioSettings->EnableMicOriginalInput(true);
-        audioSettings->SetSpeakerVolume(100);
+        // These methods may not exist in your SDK version, so they're removed
+        // audioSettings->EnableMicOriginalInput(true);
+        // audioSettings->SetSpeakerVolume(100);
     }
 
     return m_meetingService->Join(joinParam);
