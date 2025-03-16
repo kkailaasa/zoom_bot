@@ -64,6 +64,9 @@ class Zoom : public Singleton<Zoom> {
     SDKError createServices();
     void generateJWT(const string& key, const string& secret);
 
+    // Helper method to try audio subscription with different settings
+    bool tryAudioSubscription(bool mixedAudio);
+
     /**
      * Callback fired when the SDK authenticates the credentials
     */
@@ -81,11 +84,12 @@ class Zoom : public Singleton<Zoom> {
         auto* reminderController = m_meetingService->GetMeetingReminderController();
         reminderController->SetEvent(new MeetingReminderEvent());
 
-        // Make sure audio is unmuted
+        // Make sure audio is unmuted after a delay
         auto* audioController = m_meetingService->GetMeetingAudioController();
         if (audioController) {
+            sleep(2); // Wait a bit
             audioController->UnMuteAudio(0);
-            Log::info("Unmuted audio");
+            Log::info("Unmuted audio after joining");
         }
 
         if (m_config.useRawRecording()) {

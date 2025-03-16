@@ -28,8 +28,20 @@ setup-pulseaudio() {
   pactl set-default-sink SpeakerOutput || echo "Warning: Failed to set default sink"
   pactl set-default-source SpeakerOutput.monitor || echo "Warning: Failed to set default source"
 
-  # Make config file
+  # Create zoomus.conf in all possible locations
+  mkdir -p ~/.config.us/
+  echo -e "[General]\nsystem.audio.type=default" > ~/.config.us/zoomus.conf
+
+  mkdir -p ~/.config/
   echo -e "[General]\nsystem.audio.type=default" > ~/.config/zoomus.conf
+
+  echo -e "[General]\nsystem.audio.type=default" > ~/.config/pulse/zoomus.conf
+
+  # Verify zoomus.conf files exist
+  echo "Created zoomus.conf files at:"
+  ls -la ~/.config.us/zoomus.conf || echo "~/.config.us/zoomus.conf not found"
+  ls -la ~/.config/zoomus.conf || echo "~/.config/zoomus.conf not found"
+  ls -la ~/.config/pulse/zoomus.conf || echo "~/.config/pulse/zoomus.conf not found"
 }
 
 build() {

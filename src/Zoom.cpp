@@ -23,11 +23,17 @@ SDKError Zoom::init() {
     initParam.enableLogByDefault = true;
     initParam.enableGenerateDump = true;
 
+    // Add a sleep before initializing the SDK
+    sleep(1);
+
     auto err = InitSDK(initParam);
     if (hasError(err)) {
         Log::error("InitSDK failed");
         return err;
     }
+
+    // Add a sleep after initializing the SDK
+    sleep(1);
 
     return createServices();
 }
@@ -130,7 +136,7 @@ SDKError Zoom::join() {
     param.customer_key = nullptr;
     param.webinarToken = nullptr;
     param.isVideoOff = false;
-    param.isAudioOff = false;
+    param.isAudioOff = true;  // Join with audio muted first, then unmute later
 
     if (!m_config.zak().empty()) {
         Log::success("used ZAK token");
@@ -147,9 +153,29 @@ SDKError Zoom::join() {
         if (!audioSettings) return SDKERR_INTERNAL_ERROR;
 
         audioSettings->EnableAutoJoinAudio(true);
-        // These methods may not exist in your SDK version, so they're removed
-        // audioSettings->EnableMicOriginalInput(true);
-        // audioSettings->SetSpeakerVolume(100);
+
+        // Try to select audio devices explicitly
+        IMicInfo* mics = nullptr;
+        ISpeakerInfo* speakers = nullptr;
+        audioSettings->GetMicList(&mics);
+        audioSettings->GetSpeakerList(&speakers);
+
+        // If we have devices, select the first ones
+        if (mics && mics->GetDeviceCount() > 0) {
+            const zchar_t* micId = mics->GetDeviceId(0);
+            audioSettings->SelectMic(micId, nullptr);
+            Log::info("Selected microphone device");
+        } else {
+            Log::info("No microphone devices found");
+        }
+
+        if (speakers && speakers->GetDeviceCount() > 0) {
+            const zchar_t* speakerId = speakers->GetDeviceId(0);
+            audioSettings->SelectSpeaker(speakerId, nullptr);
+            Log::info("Selected speaker device");
+        } else {
+            Log::info("No speaker devices found");
+        }
     }
 
     return m_meetingService->Join(joinParam);
@@ -204,8 +230,46 @@ SDKError Zoom::clean() {
     return CleanUPSDK();
 }
 
+bool Zoom::tryAudioSubscription(bool mixedAudio) {
+    m_audioHelper = GetAudioRawdataHelper();
+    if (!m_audioHelper) {
+        Log::error("Failed to get audio rawdata helper");
+        return false;
+    }
+
+    auto transcribe = m_config.transcribe();
+    if (m_audioSource) {
+        delete m_audioSource;
+        m_audioSource = nullptr;
+    }
+
+    m_audioSource = new ZoomSDKAudioRawDataDelegate(mixedAudio, transcribe);
+    m_audioSource->setDir(m_config.audioDir());
+    m_audioSource->setFilename(m_config.audioFile());
+
+    Log::info(string("Attempting audio subscription with mixedAudio=") + (mixedAudio ? "true" : "false"));
+
+    SDKError err = m_audioHelper->subscribe(m_audioSource);
+    if (hasError(err, "subscribe to raw audio")) {
+        // Failed, let's wait and try again
+        sleep(2);
+        err = m_audioHelper->subscribe(m_audioSource);
+        return !hasError(err, "retry subscribe to raw audio");
+    }
+
+    Log::success("Audio subscription successful");
+    return true;
+}
+
 SDKError Zoom::startRawRecording() {
     auto recCtl = m_meetingService->GetMeetingRecordingController();
+
+    // Enable raw data archiving if possible
+    auto rawDataController = m_meetingService->GetMeetingRawArchivingController();
+    if (rawDataController) {
+        Log::info("Enabling raw data archiving");
+        rawDataController->EnableRawArchiving(true);
+    }
 
     SDKError err = recCtl->CanStartRawRecording();
 
@@ -232,54 +296,50 @@ SDKError Zoom::startRawRecording() {
         m_renderDelegate->setFilename(m_config.videoFile());
 
         auto participantCtl = m_meetingService->GetMeetingParticipantsController();
-        auto uid = participantCtl->GetParticipantsList()->GetItem(0);
 
-        m_videoHelper->setRawDataResolution(ZoomSDKResolution_720P);
-        err = m_videoHelper->subscribe(uid, RAW_DATA_TYPE_VIDEO);
-        if (hasError(err, "subscribe to raw video"))
-            return err;
+        // Try to get participant list and find active participants
+        if (participantCtl && participantCtl->GetParticipantsList()) {
+            unsigned int count = participantCtl->GetParticipantsList()->GetCount();
+            Log::info("Number of participants: " + to_string(count));
+
+            if (count > 0) {
+                auto uid = participantCtl->GetParticipantsList()->GetItem(0);
+                m_videoHelper->setRawDataResolution(ZoomSDKResolution_720P);
+                err = m_videoHelper->subscribe(uid, RAW_DATA_TYPE_VIDEO);
+                if (hasError(err, "subscribe to raw video")) {
+                    // Try with other participants if available
+                    for (unsigned int i = 1; i < count && i < 5; i++) {
+                        uid = participantCtl->GetParticipantsList()->GetItem(i);
+                        if (uid) {
+                            Log::info("Trying to subscribe to video for participant " + to_string(i));
+                            err = m_videoHelper->subscribe(uid, RAW_DATA_TYPE_VIDEO);
+                            if (!hasError(err, "subscribe to raw video for alternative participant"))
+                                break;
+                        }
+                    }
+                }
+            } else {
+                Log::error("No participants found for video subscription");
+            }
+        } else {
+            Log::error("Failed to get participants list");
+        }
     }
 
     if (m_config.useRawAudio()) {
-        // Wait a bit before attempting to subscribe to audio
-        sleep(2);
+        // Wait before attempting to subscribe to audio
+        sleep(3);
 
-        m_audioHelper = GetAudioRawdataHelper();
-        if (!m_audioHelper)
-            return SDKERR_UNINITIALIZE;
+        // Try with both mixedAudio=true and mixedAudio=false
+        bool originalMixedAudio = !m_config.separateParticipantAudio();
 
-        // Try multiple times to subscribe
-        int retry_count = 0;
-        const int max_retries = 3;
-
-        while (retry_count < max_retries) {
-            if (!m_audioSource) {
-                auto mixedAudio = !m_config.separateParticipantAudio();
-                auto transcribe = m_config.transcribe();
-
-                m_audioSource = new ZoomSDKAudioRawDataDelegate(mixedAudio, transcribe);
-                m_audioSource->setDir(m_config.audioDir());
-                m_audioSource->setFilename(m_config.audioFile());
+        // First try with original setting
+        if (!tryAudioSubscription(originalMixedAudio)) {
+            // If that fails, try with the opposite setting
+            Log::info("Trying with flipped mixed audio setting");
+            if (!tryAudioSubscription(!originalMixedAudio)) {
+                Log::error("Both mixed audio settings failed");
             }
-
-            err = m_audioHelper->subscribe(m_audioSource);
-            if (!hasError(err, "subscribe to raw audio")) {
-                Log::success("Successfully subscribed to audio after " + to_string(retry_count) + " retries");
-                break;
-            }
-
-            // If failed, wait and try again
-            sleep(2);
-            retry_count++;
-
-            if (retry_count < max_retries) {
-                Log::info("Retrying audio subscription, attempt " + to_string(retry_count + 1) + "/" + to_string(max_retries));
-            }
-        }
-
-        if (retry_count == max_retries) {
-            Log::error("Failed to subscribe to audio after maximum retries");
-            // Don't return error, continue with the rest of the functionality
         }
     }
 
