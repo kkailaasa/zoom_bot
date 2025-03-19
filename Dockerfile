@@ -4,7 +4,6 @@ SHELL ["/bin/bash", "-c"]
 
 ENV project=meeting-sdk-linux-sample
 ENV cwd=/tmp/$project
-
 WORKDIR $cwd
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -15,39 +14,39 @@ RUN apt-get update  \
     && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
     && apt-get update \
     && apt-get install -y \
-    build-essential \
-    ca-certificates \
-    cmake \
-    curl \
-    gdb \
-    git \
-    gfortran \
-    gcc-12 \
-    g++-12 \
-    libopencv-dev \
-    libdbus-1-3 \
-    libgbm1 \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    libglib2.0-dev \
-    libssl-dev \
-    libx11-dev \
-    libx11-xcb1 \
-    libxcb-image0 \
-    libxcb-keysyms1 \
-    libxcb-randr0 \
-    libxcb-shape0 \
-    libxcb-shm0 \
-    libxcb-xfixes0 \
-    libxcb-xtest0 \
-    libgl1-mesa-dri \
-    libxfixes3 \
-    linux-libc-dev \
-    make \
-    pkgconf \
-    tar \
-    unzip \
-    zip
+        build-essential \
+        ca-certificates \
+        cmake \
+        curl \
+        gdb \
+        git \
+        gfortran \
+        gcc-12 \
+        g++-12 \
+        libopencv-dev \
+        libdbus-1-3 \
+        libgbm1 \
+        libgl1-mesa-glx \
+        libglib2.0-0 \
+        libglib2.0-dev \
+        libssl-dev \
+        libx11-dev \
+        libx11-xcb1 \
+        libxcb-image0 \
+        libxcb-keysyms1 \
+        libxcb-randr0 \
+        libxcb-shape0 \
+        libxcb-shm0 \
+        libxcb-xfixes0 \
+        libxcb-xtest0 \
+        libgl1-mesa-dri \
+        libxfixes3 \
+        linux-libc-dev \
+        make \
+        pkgconf \
+        tar \
+        unzip \
+        zip
 
 # Set GCC-12 as the default compiler
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 \
@@ -66,8 +65,6 @@ FROM base AS deps
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
-RUN chmod +x ./bin/entry.sh
-
 
 WORKDIR /opt
 RUN git clone --depth 1 https://github.com/Microsoft/vcpkg.git \
@@ -78,4 +75,7 @@ RUN git clone --depth 1 https://github.com/Microsoft/vcpkg.git \
 FROM deps AS build
 
 WORKDIR $cwd
+COPY ./bin/entry.sh ./bin/entry.sh  # Copy the entry.sh file
+RUN chmod +x ./bin/entry.sh
+
 ENTRYPOINT ["/tini", "--", "./bin/entry.sh"]
