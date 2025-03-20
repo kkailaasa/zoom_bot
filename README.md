@@ -72,5 +72,8 @@ Another implementation of this can be found in https://github.com/zoom/meetingsd
 
 ### Running the Application
 ```
+chmod +x bin/entry.sh
+```
+```
 docker compose up
 ```
