@@ -75,7 +75,7 @@ RUN git clone --depth 1 https://github.com/Microsoft/vcpkg.git \
 FROM deps AS build
 
 WORKDIR $cwd
-COPY ./bin/entry.sh ./bin/entry.sh  # Copy the entry.sh file
-RUN chmod +x ./bin/entry.sh
+#COPY ./bin/entry.sh ./bin/entry.sh  # Copy the entry.sh file
+#RUN chmod +x ./bin/entry.sh
 
 ENTRYPOINT ["/tini", "--", "./bin/entry.sh"]
