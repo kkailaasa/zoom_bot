@@ -13,14 +13,7 @@ RECORDING_PID=""
 trap cleanup SIGTERM SIGINT
 
 cleanup() {
-  echo "Cleaning up and saving recordings..."
-
-  # Stop PulseAudio recording if running
-  if [ -n "$RECORDING_PID" ] && kill -0 $RECORDING_PID 2>/dev/null; then
-    echo "Stopping audio recording process ($RECORDING_PID)"
-    kill -TERM $RECORDING_PID
-    wait $RECORDING_PID 2>/dev/null
-  fi
+  echo "Cleaning up..."
 
   # Make sure we leave the meeting gracefully
   if [ -f "./$BUILD/zoomsdk" ]; then
@@ -30,31 +23,6 @@ cleanup() {
 
   echo "Cleanup complete."
   exit 0
-}
-
-start-audio-recording() {
-  local output_file="out/meeting-audio.wav"
-
-  echo "Starting PulseAudio recording to $output_file"
-
-  # Record stereo, 16-bit, 44.1kHz audio from the virtual speaker monitor
-  parecord --channels=2 --rate=44100 --format=s16le -d SpeakerOutput.monitor "$output_file" &
-  RECORDING_PID=$!
-
-  echo "Recording started with PID: $RECORDING_PID"
-
-  # Also start a backup recording in raw PCM format in case WAV has issues
-  pacat -r -d SpeakerOutput.monitor > out/meeting-audio.raw &
-
-  # Wait a moment to make sure recording started
-  sleep 1
-
-  # Check if recording process is still running
-  if kill -0 $RECORDING_PID 2>/dev/null; then
-    echo "✅ Recording is active"
-  else
-    echo "❌ Failed to start recording"
-  fi
 }
 
 setup-pulseaudio() {
@@ -137,10 +105,6 @@ build() {
   # Set up and start pulseaudio
   echo "Setting up PulseAudio..."
   setup-pulseaudio
-
-  # Start audio recording via PulseAudio
-  echo "Starting audio recording..."
-  start-audio-recording
 
   # Build the Source Code
   echo "Building source code..."

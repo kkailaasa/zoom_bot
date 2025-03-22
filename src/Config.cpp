@@ -22,7 +22,7 @@ Config::Config() :
 
     m_app.add_flag("-s, --start", m_isMeetingStart, "Start a Zoom Meeting");
 
-    m_rawRecordAudioCmd->add_option("-f, --file", m_audioFile, "Output PCM audio file")->required();
+    m_rawRecordAudioCmd->add_option("-f, --file", m_audioFile, "Output PCM audio file");
     m_rawRecordAudioCmd->add_option("-d, --dir", m_audioDir, "Audio Output Directory");
     m_rawRecordAudioCmd->add_flag("-s, --separate-participants", m_separateParticipantAudio, "Output to separate PCM files for each participant");
     m_rawRecordAudioCmd->add_flag("-t, --transcribe", m_transcribe, "Transcribe audio to text");
@@ -95,10 +95,6 @@ const string &Config::zak() const
     return m_zak;
 }
 
-bool Config::useRawRecording() const {
-    return useRawAudio() || useRawVideo();
-}
-
 bool Config::useRawAudio() const {
     return !m_audioFile.empty() || m_separateParticipantAudio || m_transcribe;
 }
@@ -154,5 +150,9 @@ const string& Config::displayName() const {
 
 const string& Config::zoomHost() const {
     return m_zoomHost;
+}
+
+bool Config::useRawRecording() const {
+    return m_forceRawRecording || useRawAudio() || useRawVideo();
 }
 

@@ -134,3 +134,5 @@ CTestTestfile.cmake
 _deps
 
 zoom-meeting-sdk-linux_x86_64-6.3.10.7580.tar.xz
+
+lib/zoomsdk

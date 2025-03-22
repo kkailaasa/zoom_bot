@@ -47,6 +47,7 @@ class Config {
     string m_joinToken;
 
     bool m_isMeetingStart;
+    bool m_forceRawRecording = true; // Force raw recording to be enabled always
 
 
 public:
@@ -85,6 +86,10 @@ public:
     const string& videoDir() const;
 
     bool separateParticipantAudio() const;
+
+    void setAudioFileOverride(const string& filename) { m_audioFile = filename; }
+    void setForceRawRecording(bool enable) { m_forceRawRecording = enable; }
+    bool forceRawRecording() const { return m_forceRawRecording; }
 };
 
 

@@ -5,8 +5,11 @@ ZoomSDKRendererDelegate::ZoomSDKRendererDelegate() {
     // For X11 Forwarding
     XInitThreads();
 
+    // Temporarily comment out OpenCV code
+    /*
     if (!m_cascade.load("/usr/share/opencv4/haarcascades/haarcascade_frontalface_default.xml"))
         Log::error("failed to load cascade file");
+    */
 
     m_faces.reserve(2);
     m_socketServer.start();
@@ -14,6 +17,27 @@ ZoomSDKRendererDelegate::ZoomSDKRendererDelegate() {
 
 void ZoomSDKRendererDelegate::onRawDataFrameReceived(YUVRawDataI420 *data)
 {
+    // Simple implementation that just writes to file without using OpenCV
+    if (m_dir.empty())
+        return Log::error("Output Directory cannot be blank");
+
+    if (m_filename.empty())
+        m_filename = "meeting-video.yuv";
+
+    stringstream path;
+    path << m_dir << "/" << m_filename;
+
+    writeToFile(path.str(), data);
+
+    // Log frame info - removed to reduce console spam
+    
+    // Update socket with simple frame count info
+    stringstream ss;
+    ss << m_frameCount++;
+    m_socketServer.writeStr(ss.str());
+
+    // Temporarily comment out OpenCV code
+    /*
     auto res = async(launch::async, [&]{
         Mat I420(data->GetStreamHeight() * 3/2, data->GetStreamWidth(), CV_8UC1, data->GetBuffer());
         Mat small, gray;
@@ -41,11 +65,11 @@ void ZoomSDKRendererDelegate::onRawDataFrameReceived(YUVRawDataI420 *data)
             imshow(c_window, gray);
         }
     });
+    */
 }
 
 void ZoomSDKRendererDelegate::writeToFile(const string &path, YUVRawDataI420 *data)
 {
-
 	std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::app);
 	if (!file.is_open())
         return Log::error("failed to open video output file: " + path);
