@@ -67,6 +67,7 @@ Another implementation of this can be found in https://github.com/zoom/meetingsd
    - Zoom Meeting SDK Client ID
    - Zoom Meeting SDK Client Secret
    - Join URL for the meeting
+   - Deepgram API Key
 
 > **Note:** As this is in development, the bot can only join Zoom meetings hosted by the same Zoom account that created the Zoom Meeting SDK Client ID and Client Secret.
 
