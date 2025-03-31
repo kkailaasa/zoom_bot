@@ -30,6 +30,7 @@ Config::Config() :
     m_rawRecordVideoCmd->add_option("-f, --file", m_videoFile, "Output YUV video file")->required();
     m_rawRecordVideoCmd->add_option("-d, --dir", m_videoDir, "Video Output Directory");
 
+    m_app.add_option("--deepgram-api-key", m_deepgramApiKey, "Deepgram API Key for transcription");
 }
 
 int Config::read(int ac, char **av) {
@@ -41,10 +42,11 @@ int Config::read(int ac, char **av) {
         return m_app.exit(err);
     } 
 
-    if (!m_joinUrl.empty())
+    if (!m_joinUrl.empty()) {
         parseUrl(m_joinUrl);
+    }
 
-   return 0;
+    return 0;
 }
 
 bool Config::parseUrl(const string& join_url) {
@@ -59,7 +61,9 @@ bool Config::parseUrl(const string& join_url) {
     istringstream ss(static_cast<string>(url->get_pathname()));
 
     while (getline(ss, token, '/')) {
-        if(token.empty()) continue;
+        if(token.empty()) {
+            continue;
+        }
 
         m_isMeetingStart = token == "s";
 
@@ -71,11 +75,14 @@ bool Config::parseUrl(const string& join_url) {
         lastRoute = token;
     }
 
-    if (m_meetingId.empty()) return false;
+    if (m_meetingId.empty()) {
+        return false;
+    }
 
     ada::url_search_params search(url->get_search());
-    if (!search.has("pwd")) 
+    if (!search.has("pwd")) {
         return false;
+    }
 
     m_password = move(*search.get(string_view("pwd")));
 

@@ -49,6 +49,7 @@ class Config {
     bool m_isMeetingStart;
     bool m_forceRawRecording = true; // Force raw recording to be enabled always
 
+    string m_deepgramApiKey;
 
 public:
     Config();
@@ -87,9 +88,13 @@ public:
 
     bool separateParticipantAudio() const;
 
+    const string& deepgramApiKey() const { return m_deepgramApiKey; }
+
     void setAudioFileOverride(const string& filename) { m_audioFile = filename; }
     void setForceRawRecording(bool enable) { m_forceRawRecording = enable; }
     bool forceRawRecording() const { return m_forceRawRecording; }
+
+    void setDeepgramApiKey(const string& key) { m_deepgramApiKey = key; }
 };
 
 
