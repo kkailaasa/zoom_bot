@@ -20,8 +20,11 @@ void AuthServiceEvent::onAuthenticationReturn(AuthResult result) {
             message << "operation timed out";
             break;
         case AUTHRET_SUCCESS:
-            if (m_onAuth) m_onAuth();
-            else message << "authentication callback was not set";
+            if (m_onAuth) {
+                m_onAuth();
+            } else {
+                message << "authentication callback was not set";
+            }
             break;
         default:
             message << "Zoom SDK encountered an unknown error: " << result;

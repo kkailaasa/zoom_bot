@@ -6,7 +6,9 @@ ZoomSDKAudioRawDataDelegate::ZoomSDKAudioRawDataDelegate(bool useMixedAudio = tr
 }
 
 void ZoomSDKAudioRawDataDelegate::onMixedAudioRawDataReceived(AudioRawData *data) {
-    if (!m_useMixedAudio) return;
+    if (!m_useMixedAudio) {
+        return;
+    }
 
     // write to socket (always do this for transcription regardless of recording state)
     if (m_transcribe) {
@@ -38,7 +40,9 @@ void ZoomSDKAudioRawDataDelegate::onMixedAudioRawDataReceived(AudioRawData *data
 
 
 void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData* data, uint32_t node_id) {
-    if (m_useMixedAudio) return;
+    if (m_useMixedAudio) {
+        return;
+    }
     
     // Check if recording has started before writing to file
     if (!m_recordingStarted) {

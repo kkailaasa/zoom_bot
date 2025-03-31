@@ -22,11 +22,15 @@ void MeetingServiceEvent::onMeetingStatusChanged(MeetingStatus status, int iResu
             break;
         case MEETING_STATUS_INMEETING:
             Log::success("connected");
-            if (m_onMeetingJoin) m_onMeetingJoin();
+            if (m_onMeetingJoin) {
+                m_onMeetingJoin();
+            }
             return;
         case MEETING_STATUS_ENDED:
             Log::success("meeting ended");
-            if (m_onMeetingEnd) m_onMeetingEnd();
+            if (m_onMeetingEnd) {
+                m_onMeetingEnd();
+            }
             return;
         case MEETING_STATUS_FAILED:
             Log::error("failed to connect to the meeting with MeetingFailCode " + result);

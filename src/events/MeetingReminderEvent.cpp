@@ -9,6 +9,7 @@ void MeetingReminderEvent::onReminderNotify(IMeetingReminderContent* content, IM
         cout << "Is Blocking?: " << content->IsBlocking() << endl;
     }
 
-    if (handle)
+    if (handle) {
         handle->Accept();
+    }
 }

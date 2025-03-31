@@ -18,11 +18,13 @@ ZoomSDKRendererDelegate::ZoomSDKRendererDelegate() {
 void ZoomSDKRendererDelegate::onRawDataFrameReceived(YUVRawDataI420 *data)
 {
     // Simple implementation that just writes to file without using OpenCV
-    if (m_dir.empty())
+    if (m_dir.empty()) {
         return Log::error("Output Directory cannot be blank");
+    }
 
-    if (m_filename.empty())
+    if (m_filename.empty()) {
         m_filename = "meeting-video.yuv";
+    }
 
     stringstream path;
     path << m_dir << "/" << m_filename;
@@ -70,14 +72,15 @@ void ZoomSDKRendererDelegate::onRawDataFrameReceived(YUVRawDataI420 *data)
 
 void ZoomSDKRendererDelegate::writeToFile(const string &path, YUVRawDataI420 *data)
 {
-	std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::app);
-	if (!file.is_open())
+    std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::app);
+    if (!file.is_open()) {
         return Log::error("failed to open video output file: " + path);
+    }
 
-	file.write(data->GetBuffer(), data->GetBufferLen());
+    file.write(data->GetBuffer(), data->GetBufferLen());
 
-	file.close();
-	file.flush();
+    file.close();
+    file.flush();
 }
 
 void ZoomSDKRendererDelegate::setDir(const string &dir)
